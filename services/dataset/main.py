@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from services.dataset.interfaces.router import router
+from services.dataset.interfaces.Controller import router
 from common.dependencies.database import engine, Base
 from contextlib import asynccontextmanager
 

@@ -45,7 +45,6 @@ class DatasetVisualUpdateReq(BaseModel):
 
 class DatasetInfoResp(BaseModel):
     id: int
-    biz_id: str
     dataset_id: int
     project_id: int
     dataset_name: str

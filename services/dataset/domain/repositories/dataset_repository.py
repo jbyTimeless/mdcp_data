@@ -7,7 +7,6 @@ from services.dataset.domain.entities.dataset import Dataset
 
 class DatasetListItemDTO(BaseModel):
     id: int
-    biz_id: str
     dataset_id: int
     project_id: int
     dataset_name: str
@@ -35,9 +34,6 @@ class DatasetRepository(ABC):
     async def get_by_id(self, dataset_db_id: int) -> Optional[Dataset]:
         pass
 
-    @abstractmethod
-    async def get_by_biz_id(self, biz_id: str) -> Optional[Dataset]:
-        pass
 
     @abstractmethod
     async def check_name_conflicts(self, project_db_id: int, dataset_name: str, dataset_en_name: str) -> Optional[str]:

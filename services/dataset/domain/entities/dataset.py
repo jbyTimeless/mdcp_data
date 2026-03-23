@@ -7,7 +7,6 @@ class Dataset(BaseModel):
     Dataset Aggregate Root
     """
     id: Optional[int] = None
-    biz_id: str
     dataset_id: int
     project_id: int  # FK to data_project.id
     dataset_name: str

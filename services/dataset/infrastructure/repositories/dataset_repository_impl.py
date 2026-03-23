@@ -50,7 +50,7 @@ class DatasetRepositoryImpl(DatasetRepository):
     ) -> bool:
         """Check if user has required permission on a dataset (or is the creator, or has project permission)"""
         # First check if user is the dataset creator
-        ds_stmt = select(DatasetInfo.create_user_id, DatasetInfo.project_id).where(DatasetInfo.id == dataset_db_id)
+        ds_stmt = select(DatasetInfo.create_user_id, DatasetInfo.project_id).where(DatasetInfo.dataset_id == dataset_db_id)
         ds_result = await self.session.execute(ds_stmt)
         ds_row = ds_result.first()
         if not ds_row:
@@ -100,7 +100,6 @@ class DatasetRepositoryImpl(DatasetRepository):
         if dataset.id is None:
             # Create new
             new_ds = DatasetInfo(
-                biz_id=dataset.biz_id,
                 dataset_id=dataset.dataset_id,
                 project_id=dataset.project_id,
                 dataset_name=dataset.dataset_name,
@@ -128,7 +127,6 @@ class DatasetRepositoryImpl(DatasetRepository):
             # Handle stat_dataset_relation if stat_level3_id is provided
             if dataset.stat_level3_id:
                 relation = StatDatasetRelation(
-                    biz_id=uuid.uuid4().hex,
                     relation_id=random.randint(100000, 999999),
                     stat_id=dataset.stat_level3_id,
                     project_id=dataset.project_id,
@@ -163,7 +161,7 @@ class DatasetRepositoryImpl(DatasetRepository):
 
     async def get_by_id(self, dataset_db_id: int) -> Optional[Dataset]:
         stmt = select(DatasetInfo).where(
-            DatasetInfo.id == dataset_db_id,
+            DatasetInfo.dataset_id == dataset_db_id,
             DatasetInfo.is_deleted == 0
         )
         result = await self.session.execute(stmt)
@@ -172,16 +170,6 @@ class DatasetRepositoryImpl(DatasetRepository):
             return None
         return self._to_domain(ds)
 
-    async def get_by_biz_id(self, biz_id: str) -> Optional[Dataset]:
-        stmt = select(DatasetInfo).where(
-            DatasetInfo.biz_id == biz_id,
-            DatasetInfo.is_deleted == 0
-        )
-        result = await self.session.execute(stmt)
-        ds = result.scalars().first()
-        if not ds:
-            return None
-        return self._to_domain(ds)
 
     async def list_datasets(
         self,
@@ -243,7 +231,6 @@ class DatasetRepositoryImpl(DatasetRepository):
         for ds, creator_name in rows:
             items.append(DatasetListItemDTO(
                 id=ds.id,
-                biz_id=ds.biz_id,
                 dataset_id=ds.dataset_id,
                 project_id=ds.project_id,
                 dataset_name=ds.dataset_name,
@@ -265,7 +252,6 @@ class DatasetRepositoryImpl(DatasetRepository):
     def _to_domain(self, ds: DatasetInfo) -> Dataset:
         return Dataset(
             id=ds.id,
-            biz_id=ds.biz_id,
             dataset_id=ds.dataset_id,
             project_id=ds.project_id,
             dataset_name=ds.dataset_name,

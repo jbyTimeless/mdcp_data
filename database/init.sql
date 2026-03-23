@@ -1,5 +1,4 @@
 -- mdcp_data.data_project definition
-
 CREATE TABLE `data_project` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '【物理主键】数据库自增ID，仅内部使用',
   `project_id` varchar(64) NOT NULL COMMENT '【业务主键】项目唯一ID（自定义规则：雪花ID/UUID/业务编码）',
@@ -26,12 +25,9 @@ CREATE TABLE `data_project` (
   KEY `idx_create_user` (`create_user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据项目表（数据集顶层管理单元）';
 
-
 -- mdcp_data.data_stat_config definition
-
 CREATE TABLE `data_stat_config` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `stat_id` bigint NOT NULL COMMENT '统计配置业务关联ID',
   `parent_stat_id` bigint NOT NULL DEFAULT '0' COMMENT '父统计ID，顶层为0',
   `stat_name` varchar(64) NOT NULL COMMENT '统计分类名称',
@@ -43,17 +39,13 @@ CREATE TABLE `data_stat_config` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_parent_stat_name` (`parent_stat_id`,`stat_name`),
   KEY `idx_level` (`level`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据统计配置表（统计树管理）';
 
-
 -- mdcp_data.data_subset definition
-
 CREATE TABLE `data_subset` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `subset_id` bigint NOT NULL COMMENT '子集业务关联ID',
   `dataset_id` bigint NOT NULL COMMENT '所属数据集ID',
   `parent_subset_id` bigint NOT NULL DEFAULT '0' COMMENT '父子集ID，顶层子集为0',
@@ -67,19 +59,15 @@ CREATE TABLE `data_subset` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_dataset_subset_name` (`dataset_id`,`parent_subset_id`,`subset_name`),
   KEY `idx_dataset_id` (`dataset_id`),
   KEY `idx_parent_subset` (`parent_subset_id`),
   KEY `idx_level` (`level`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据子集表（数据集物理树形分层）';
 
-
 -- mdcp_data.dataset_info definition
-
 CREATE TABLE `dataset_info` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `dataset_id` bigint NOT NULL COMMENT '数据集业务关联ID',
   `project_id` bigint NOT NULL COMMENT '所属项目ID',
   `dataset_name` varchar(64) NOT NULL COMMENT '数据集名称（项目内唯一）',
@@ -103,19 +91,15 @@ CREATE TABLE `dataset_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_project_dataset_name` (`project_id`,`dataset_name`),
   UNIQUE KEY `uk_project_dataset_en_name` (`project_id`,`dataset_en_name`),
   KEY `idx_project_id` (`project_id`),
   KEY `idx_create_user` (`create_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据集主表（数据集核心元数据表）';
 
-
 -- mdcp_data.dataset_permission definition
-
 CREATE TABLE `dataset_permission` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `permission_id` bigint NOT NULL COMMENT '权限业务关联ID',
   `resource_type` varchar(32) NOT NULL COMMENT '资源类型：project-项目 dataset-数据集 subset-子集 view-视图',
   `resource_id` bigint NOT NULL COMMENT '资源ID（对应项目/数据集/子集/视图主键）',
@@ -126,18 +110,14 @@ CREATE TABLE `dataset_permission` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '状态：1-生效 0-失效',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_resource_user` (`resource_type`,`resource_id`,`user_id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_resource` (`resource_type`,`resource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据集权限表（细粒度权限控制）';
 
-
 -- mdcp_data.dataset_view definition
-
 CREATE TABLE `dataset_view` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `view_id` bigint NOT NULL COMMENT '视图业务关联ID',
   `dataset_id` bigint NOT NULL COMMENT '所属数据集ID',
   `view_name` varchar(64) NOT NULL COMMENT '视图名称（数据集内唯一）',
@@ -149,17 +129,13 @@ CREATE TABLE `dataset_view` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_dataset_view_name` (`dataset_id`,`view_name`),
   KEY `idx_dataset_id` (`dataset_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据集视图表（数据集逻辑筛选视图）';
 
-
 -- mdcp_data.label_delivery_task definition
-
 CREATE TABLE `label_delivery_task` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `task_id` bigint NOT NULL COMMENT '送标任务业务关联ID',
   `task_name` varchar(128) NOT NULL COMMENT '标注任务名称',
   `label_category` varchar(32) NOT NULL COMMENT '标注分类',
@@ -176,19 +152,15 @@ CREATE TABLE `label_delivery_task` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   KEY `idx_label_type` (`label_type_id`),
   KEY `idx_source_dataset` (`source_dataset_id`),
   KEY `idx_task_status` (`task_status`),
   KEY `idx_batch_no` (`label_platform_batch_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据送标任务表';
 
-
 -- mdcp_data.label_type definition
-
 CREATE TABLE `label_type` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `type_id` bigint NOT NULL COMMENT '标注类型业务关联ID',
   `label_category` varchar(32) NOT NULL COMMENT '标注分类（2D/3D等）',
   `type_name` varchar(32) NOT NULL COMMENT '标注类型名称',
@@ -200,33 +172,26 @@ CREATE TABLE `label_type` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_type_name` (`type_name`),
   UNIQUE KEY `uk_channel_code` (`related_channel_code`),
   KEY `idx_label_category` (`label_category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标注类型配置表';
 
-
 -- mdcp_data.stat_dataset_relation definition
-
 CREATE TABLE `stat_dataset_relation` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `relation_id` bigint NOT NULL COMMENT '关联业务关联ID',
   `stat_id` bigint NOT NULL COMMENT '三级统计分类ID',
   `project_id` bigint NOT NULL COMMENT '所属项目ID',
   `dataset_id` bigint NOT NULL COMMENT '数据集ID',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_stat_dataset` (`stat_id`,`dataset_id`),
   KEY `idx_stat_id` (`stat_id`),
   KEY `idx_dataset_id` (`dataset_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统计-数据集关联表';
 
-
 -- mdcp_data.sys_role definition
-
 CREATE TABLE `sys_role` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '【物理主键】数据库自增ID，仅内部使用',
   `role_id` bigint NOT NULL COMMENT '【业务主键】角色唯一ID（自定义雪花ID）',
@@ -242,9 +207,7 @@ CREATE TABLE `sys_role` (
   UNIQUE KEY `uk_role_code` (`role_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统角色表';
 
-
 -- mdcp_data.sys_user definition
-
 CREATE TABLE `sys_user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '【物理主键】数据库自增ID，仅内部使用',
   `user_id` bigint NOT NULL COMMENT '【业务主键】用户唯一ID（自定义雪花ID）',
@@ -265,18 +228,14 @@ CREATE TABLE `sys_user` (
   KEY `idx_role_code` (`role_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统用户表';
 
-
 -- mdcp_data.view_subset_relation definition
-
 CREATE TABLE `view_subset_relation` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '物理主键ID',
-  `biz_id` varchar(64) NOT NULL COMMENT '业务唯一主键ID（全局唯一）',
   `relation_id` bigint NOT NULL COMMENT '关联业务关联ID',
   `view_id` bigint NOT NULL COMMENT '视图ID',
   `subset_id` bigint NOT NULL COMMENT '数据子集ID',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_biz_id` (`biz_id`),
   UNIQUE KEY `uk_view_subset` (`view_id`,`subset_id`),
   KEY `idx_view_id` (`view_id`),
   KEY `idx_subset_id` (`subset_id`)

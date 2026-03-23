@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 from typing import List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func, delete, or_, desc, asc
 from services.dataset.domain.entities.project import Project, ProjectPermission
 from services.dataset.domain.repositories.project_repository import ProjectRepository, ProjectListItemDTO
 from services.dataset.infrastructure.models import DataProject, DatasetPermission, DatasetInfo, SysUser
@@ -168,14 +169,51 @@ class ProjectRepositoryImpl(ProjectRepository):
         result = await self.session.execute(stmt)
         return result.scalar() == 0
 
-    async def list_projects(self, user_id: int, page: int, size: int) -> Tuple[List[ProjectListItemDTO], int]:
+    async def list_projects(
+        self, 
+        user_id: int, 
+        page: int, 
+        size: int,
+        project_name_like: Optional[str] = None,
+        creator_name_like: Optional[str] = None,
+        create_time_start: Optional[datetime] = None,
+        create_time_end: Optional[datetime] = None,
+        update_time_start: Optional[datetime] = None,
+        update_time_end: Optional[datetime] = None,
+        order_by: str = "id",
+        order_direction: str = "asc"
+    ) -> Tuple[List[ProjectListItemDTO], int]:
+        # Base query for data and count
+        def apply_filters(query):
+            query = query.where(DataProject.is_deleted == 0)
+            if project_name_like:
+                query = query.where(
+                    or_(
+                        DataProject.project_name.like(f"%{project_name_like}%"),
+                        DataProject.project_en_name.like(f"%{project_name_like}%")
+                    )
+                )
+            if creator_name_like:
+                query = query.where(SysUser.username.like(f"{creator_name_like}%"))
+            if create_time_start:
+                query = query.where(DataProject.create_time >= create_time_start)
+            if create_time_end:
+                query = query.where(DataProject.create_time <= create_time_end)
+            if update_time_start:
+                query = query.where(DataProject.update_time >= update_time_start)
+            if update_time_end:
+                query = query.where(DataProject.update_time <= update_time_end)
+            return query
+
         # Count query
-        count_stmt = select(func.count(DataProject.id)).where(DataProject.is_deleted == 0)
+        count_stmt = select(func.count(DataProject.id)).outerjoin(
+            SysUser, DataProject.create_user_id == SysUser.id
+        )
+        count_stmt = apply_filters(count_stmt)
         count_result = await self.session.execute(count_stmt)
         total = count_result.scalar()
 
-        # Join SysUser for creator_name (Outer join just in case creator is missing in dummy DB)
-        # Outer join DatasetPermission for user's permission
+        # Data query
         stmt = select(
             DataProject,
             SysUser.username.label("creator_name"),
@@ -188,17 +226,29 @@ class ProjectRepositoryImpl(ProjectRepository):
             (DatasetPermission.resource_id == DataProject.id) &
             (DatasetPermission.user_id == user_id) &
             (DatasetPermission.status == 1)
-        ).where(DataProject.is_deleted == 0) \
-         .order_by(DataProject.create_time.desc()) \
-         .offset((page - 1) * size) \
-         .limit(size)
+        )
+        
+        stmt = apply_filters(stmt)
+
+        # Sorting
+        if order_by == "creator_name":
+            sort_col = SysUser.username
+        else:
+            sort_col = getattr(DataProject, order_by, DataProject.id)
+
+        if order_direction.lower() == "desc":
+            stmt = stmt.order_by(desc(sort_col))
+        else:
+            stmt = stmt.order_by(asc(sort_col))
+
+        # Pagination
+        stmt = stmt.offset((page - 1) * size).limit(size)
          
         result = await self.session.execute(stmt)
         rows = result.all()
         
         items = []
         for dp, creator_name, my_perm in rows:
-            # Fallback for creator name if not in DB
             eff_creator_name = creator_name if creator_name else f"User {dp.create_user_id}"
             eff_perm = 'manage' if dp.create_user_id == user_id else my_perm
             
@@ -207,7 +257,10 @@ class ProjectRepositoryImpl(ProjectRepository):
                 project_id=dp.project_id,
                 project_name=dp.project_name,
                 project_en_name=dp.project_en_name,
+                create_user_id=dp.create_user_id,
                 creator_name=eff_creator_name,
+                create_time=dp.create_time,
+                update_time=dp.update_time,
                 my_permission=eff_perm
             ))
             

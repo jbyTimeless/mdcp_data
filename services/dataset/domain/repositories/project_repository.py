@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Optional, Tuple
 from pydantic import BaseModel
 from services.dataset.domain.entities.project import Project
@@ -8,14 +9,13 @@ class ProjectListItemDTO(BaseModel):
     project_id: str
     project_name: str
     project_en_name: str
-    my_permission: Optional[str] = None
+    create_user_id: int
     creator_name: str
+    create_time: datetime
+    update_time: datetime
+    my_permission: Optional[str] = None
 
 class ProjectRepository(ABC):
-    @abstractmethod
-    async def create_project(self, req: 'ProjectCreateReq', current_user_id: int) -> 'ProjectInfoResp':
-        pass
-        
     @abstractmethod
     async def get_by_id(self, project_id: str) -> Optional[Project]:
         pass
@@ -39,6 +39,19 @@ class ProjectRepository(ABC):
         pass
         
     @abstractmethod
-    async def list_projects(self, user_id: int, page: int, size: int) -> Tuple[List[ProjectListItemDTO], int]:
-        """Return a list of projects and total count"""
+    async def list_projects(
+        self, 
+        user_id: int, 
+        page: int, 
+        size: int,
+        project_name_like: Optional[str] = None,
+        creator_name_like: Optional[str] = None,
+        create_time_start: Optional[datetime] = None,
+        create_time_end: Optional[datetime] = None,
+        update_time_start: Optional[datetime] = None,
+        update_time_end: Optional[datetime] = None,
+        order_by: str = "id",
+        order_direction: str = "asc"
+    ) -> Tuple[List[ProjectListItemDTO], int]:
+        """Return a list of projects and total count with filtering and sorting"""
         pass

@@ -1,15 +1,16 @@
+from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from common.dependencies.database import get_db
 from sqlalchemy import select
-from fastapi import HTTPException, status
-from typing import List
+from typing import List, Optional
 from services.dataset.infrastructure.models import SysUser
 from services.dataset.domain.entities.project import Project, ProjectPermission
 from services.dataset.domain.repositories.project_repository import ProjectRepository
 from services.dataset.application.schemas.project import (
     ProjectListResp, ProjectUpdateReq, ProjectPermissionItem, 
-    ProjectPermissionListResp, ProjectPermissionUpdateReq, ProjectInfoResp, ProjectCreateReq
+    ProjectPermissionListResp, ProjectPermissionUpdateReq, ProjectInfoResp, ProjectCreateReq,
+    ProjectListReq
 )
 from services.dataset.infrastructure.repositories.project_repository_impl import ProjectRepositoryImpl
 
@@ -33,8 +34,20 @@ class ProjectApplicationService:
         saved_project = await self.repo.create_project(req, current_user_id)
         return ProjectInfoResp.model_validate(saved_project)
 
-    async def list_projects(self, user_id: int, page: int, size: int) -> ProjectListResp:
-        items, total = await self.repo.list_projects(user_id, page, size)
+    async def list_projects(self, req: ProjectListReq, user_id: int) -> ProjectListResp:
+        items, total = await self.repo.list_projects(
+            user_id, 
+            req.page, 
+            req.size,
+            project_name_like=req.project_name_like,
+            creator_name_like=req.creator_name_like,
+            create_time_start=req.create_time_start,
+            create_time_end=req.create_time_end,
+            update_time_start=req.update_time_start,
+            update_time_end=req.update_time_end,
+            order_by=req.order_by,
+            order_direction=req.order_direction
+        )
         return ProjectListResp(total=total, items=items)
 
     async def update_project(self, project_id: str, req: ProjectUpdateReq) -> ProjectInfoResp:

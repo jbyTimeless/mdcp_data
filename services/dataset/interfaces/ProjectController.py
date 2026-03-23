@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends
+from datetime import datetime
+from typing import Optional
+from fastapi import APIRouter, Depends, Query, HTTPException
 from common.dependencies.auth import get_current_user
 from common.schemas.response import ResponseStructure, success, error
 from services.dataset.infrastructure.models import SysUser
 from services.dataset.application.schemas.project import (
     ProjectCreateReq, ProjectInfoResp, ProjectListResp, ProjectUpdateReq,
-    ProjectPermissionListResp, ProjectPermissionUpdateReq
+    ProjectPermissionListResp, ProjectPermissionUpdateReq, ProjectListReq
 )
 from services.dataset.application.services.ProjectApplicationService import ProjectApplicationService
-from fastapi import Query
 
 router = APIRouter(prefix="/project", tags=["Data Project"])
 
@@ -29,18 +30,15 @@ async def create_data_project(
             return error(msg=str(getattr(e, "detail", str(e))), code=getattr(e, "status_code"))
         return error(msg=f"Failed to create project: {str(e)}")
 
-@router.get("/list", response_model=ResponseStructure[ProjectListResp])
+@router.post("/list", response_model=ResponseStructure[ProjectListResp])
 async def list_projects(
-    page: int = Query(1, ge=1),
-    size: int = Query(10, ge=1, le=100),
+    req: ProjectListReq,
     current_user: SysUser = Depends(get_current_user),
     service: ProjectApplicationService = Depends()
 ):
-    """获取项目列表（分页）"""
+    """获取项目列表（分页、过滤、排序 - 支持POST Body）"""
     try:
-        resp_data = await service.list_projects(
-            user_id=current_user.id, page=page, size=size
-        )
+        resp_data = await service.list_projects(req, current_user.id)
         return success(data=resp_data, msg="Success")
     except Exception as e:
         return error(msg=f"Failed to list projects: {str(e)}")

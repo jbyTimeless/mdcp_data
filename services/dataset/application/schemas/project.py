@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
 from typing import Optional, List
+from pydantic import BaseModel, Field
+from services.dataset.domain.repositories.project_repository import ProjectListItemDTO
 
 class ProjectCreateReq(BaseModel):
     project_name: str = Field(..., max_length=32, description="项目名称（全局唯一）")
@@ -37,13 +39,17 @@ class ProjectInfoResp(BaseModel):
     class Config:
         from_attributes = True
 
-class ProjectListItemDTO(BaseModel):
-    id: int
-    project_id: str
-    project_name: str
-    project_en_name: str
-    my_permission: Optional[str] = None
-    creator_name: str
+class ProjectListReq(BaseModel):
+    page: int = 1
+    size: int = 10
+    project_name_like: Optional[str] = None
+    creator_name_like: Optional[str] = None
+    create_time_start: Optional[datetime] = None
+    create_time_end: Optional[datetime] = None
+    update_time_start: Optional[datetime] = None
+    update_time_end: Optional[datetime] = None
+    order_by: str = "id"
+    order_direction: str = "asc"
 
 class ProjectListResp(BaseModel):
     total: int

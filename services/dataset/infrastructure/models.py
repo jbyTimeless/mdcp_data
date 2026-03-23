@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, BigInteger, DateTime, text
+from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text, JSON, text
 from sqlalchemy.sql import func
 from common.dependencies.database import Base
 
@@ -60,27 +60,68 @@ class DataProject(Base):
 
 class DatasetInfo(Base):
     __tablename__ = 'dataset_info'
-    __table_args__ = {'comment': '数据集主表'}
+    __table_args__ = {'comment': '数据集主表（数据集核心元数据表）'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
     biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
     dataset_id = Column(BigInteger, nullable=False, comment='数据集业务关联ID')
     project_id = Column(BigInteger, nullable=False, index=True, comment='所属项目ID')
-    dataset_name = Column(String(64), nullable=False, comment='数据集名称')
+    dataset_name = Column(String(64), nullable=False, comment='数据集名称（项目内唯一）')
     dataset_en_name = Column(String(64), nullable=False, comment='数据集英文名称')
     dataset_path = Column(String(256), nullable=False, comment='数据集存储路径')
-    dataset_type = Column(String(32), nullable=False, comment='数据集类型')
-    media_type = Column(String(32), nullable=False, comment='数据媒体形式')
+    dataset_type = Column(String(32), nullable=False, comment='数据集类型（标注数据集/暂存数据集等）')
+    media_type = Column(String(32), nullable=False, comment='数据媒体形式（图片/点云/视频等）')
+    application_scenario = Column(String(32), nullable=True, comment='应用场景（研发训练/仿真测试等）')
     is_data_update_open = Column(Integer, nullable=False, server_default=text("0"), comment='是否开启数据更新：1-开启 0-关闭')
+    related_dataset_id = Column(BigInteger, nullable=True, comment='关联数据集ID')
+    stat_level1_id = Column(BigInteger, nullable=True, comment='关联统计树一级分类ID')
+    stat_level2_id = Column(BigInteger, nullable=True, comment='关联统计树二级分类ID')
+    stat_level3_id = Column(BigInteger, nullable=True, comment='关联统计树三级分类ID')
+    tags = Column(String(256), nullable=True, comment='数据集标签，逗号分隔')
+    description = Column(Text, nullable=True, comment='数据集简介/概览描述')
+    schema_config = Column(JSON, nullable=True, comment='数据结构Schema配置')
+    column_config = Column(JSON, nullable=True, comment='数据列配置')
+    visual_config = Column(JSON, nullable=True, comment='可视化信息配置')
     create_user_id = Column(BigInteger, nullable=False, index=True, comment='创建人用户ID')
     create_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), comment='创建时间')
     update_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment='更新时间')
     is_deleted = Column(Integer, nullable=False, server_default=text("0"), comment='软删除：0-未删除 1-已删除')
 
 
+class DataStatConfig(Base):
+    __tablename__ = 'data_stat_config'
+    __table_args__ = {'comment': '数据统计配置表（统计树管理）'}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
+    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
+    stat_id = Column(BigInteger, nullable=False, comment='统计配置业务关联ID')
+    parent_stat_id = Column(BigInteger, nullable=False, server_default=text("0"), comment='父统计ID，顶层为0')
+    stat_name = Column(String(64), nullable=False, comment='统计分类名称')
+    level = Column(Integer, nullable=False, comment='层级：1-一级 2-二级 3-三级')
+    summary_type = Column(String(32), nullable=False, server_default=text("'SUM'"), comment='汇总类型：SUM/COUNT等')
+    description = Column(String(512), nullable=True, comment='备注描述')
+    create_user_id = Column(BigInteger, nullable=False, comment='创建人用户ID')
+    create_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), comment='创建时间')
+    update_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment='更新时间')
+    is_deleted = Column(Integer, nullable=False, server_default=text("0"), comment='软删除：0-未删除 1-已删除')
+
+
+class StatDatasetRelation(Base):
+    __tablename__ = 'stat_dataset_relation'
+    __table_args__ = {'comment': '统计-数据集关联表'}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
+    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
+    relation_id = Column(BigInteger, nullable=False, comment='关联业务关联ID')
+    stat_id = Column(BigInteger, nullable=False, index=True, comment='三级统计分类ID')
+    project_id = Column(BigInteger, nullable=False, comment='所属项目ID')
+    dataset_id = Column(BigInteger, nullable=False, index=True, comment='数据集ID')
+    create_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), comment='创建时间')
+
+
 class DatasetPermission(Base):
     __tablename__ = 'dataset_permission'
-    __table_args__ = {'comment': '数据集权限表'}
+    __table_args__ = {'comment': '数据集权限表（细粒度权限控制）'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
     biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')

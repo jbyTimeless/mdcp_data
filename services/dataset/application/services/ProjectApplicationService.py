@@ -54,30 +54,43 @@ class ProjectApplicationService:
         project = await self.repo.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-            
-        # Update info and storage
-        project.update_info(project_name=req.project_name)
         
-        # We need to check if we can update storage
-        is_empty = await self.repo.is_project_empty(project.id)
-        try:
-            project.update_storage(
-                is_empty=is_empty,
-                is_compliance_open=req.is_compliance_open,
-                is_share_storage=req.is_share_storage,
-                storage_type=req.storage_type,
-                storage_endpoint=req.storage_endpoint,
-                bucket_name=req.bucket_name,
-                storage_dir=req.storage_dir,
-                write_ak=req.write_ak,
-                write_sk=req.write_sk,
-                read_ak=req.read_ak,
-                read_sk=req.read_sk
-            )
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        # Partial update logic
+        update_data = req.model_dump(exclude_unset=True)
+        
+        # Categorize updates
+        base_keys = {"project_name", "is_compliance_open"}
+        storage_keys = {
+            "is_share_storage", "storage_type", "storage_endpoint", 
+            "bucket_name", "storage_dir", "write_ak", "write_sk", "read_ak", "read_sk"
+        }
+        
+        base_updates = {k: v for k, v in update_data.items() if k in base_keys}
+        storage_updates = {k: v for k, v in update_data.items() if k in storage_keys}
+        
+        # Mandatory fields that shouldn't be set to None (DB nullable=False)
+        mandatory_fields = {
+            "project_name", "storage_type", "storage_endpoint", 
+            "bucket_name", "storage_dir", "is_compliance_open", "is_share_storage"
+        }
+        
+        if base_updates:
+            # Filter out None values for mandatory fields
+            base_updates = {k: v for k, v in base_updates.items() if v is not None or k not in mandatory_fields}
             
-        # Save changes
+            new_name = base_updates.pop("project_name", project.project_name)
+            project.update_info(project_name=new_name, **base_updates)
+            
+        if storage_updates:
+            # Filter out None values for mandatory fields
+            storage_updates = {k: v for k, v in storage_updates.items() if v is not None or k not in mandatory_fields}
+            
+            is_empty = await self.repo.is_project_empty(project.id)
+            try:
+                project.update_storage(is_empty=is_empty, **storage_updates)
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+                
         saved_project = await self.repo.save(project)
         return ProjectInfoResp.model_validate(saved_project)
 

@@ -56,13 +56,13 @@ class ProjectListResp(BaseModel):
     items: List[ProjectListItemDTO]
 
 class ProjectUpdateReq(BaseModel):
-    project_name: str
-    is_compliance_open: int = 0
-    is_share_storage: int = 0
-    storage_type: str
-    storage_endpoint: str
-    bucket_name: str
-    storage_dir: str
+    project_name: Optional[str] = None
+    is_compliance_open: Optional[int] = None
+    is_share_storage: Optional[int] = None
+    storage_type: Optional[str] = None
+    storage_endpoint: Optional[str] = None
+    bucket_name: Optional[str] = None
+    storage_dir: Optional[str] = None
     write_ak: Optional[str] = None
     write_sk: Optional[str] = None
     read_ak: Optional[str] = None

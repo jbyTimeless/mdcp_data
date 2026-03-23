@@ -63,7 +63,6 @@ class DatasetInfo(Base):
     __table_args__ = {'comment': '数据集主表（数据集核心元数据表）'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
-    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
     dataset_id = Column(BigInteger, nullable=False, comment='数据集业务关联ID')
     project_id = Column(BigInteger, nullable=False, index=True, comment='所属项目ID')
     dataset_name = Column(String(64), nullable=False, comment='数据集名称（项目内唯一）')
@@ -93,7 +92,6 @@ class DataStatConfig(Base):
     __table_args__ = {'comment': '数据统计配置表（统计树管理）'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
-    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
     stat_id = Column(BigInteger, nullable=False, comment='统计配置业务关联ID')
     parent_stat_id = Column(BigInteger, nullable=False, server_default=text("0"), comment='父统计ID，顶层为0')
     stat_name = Column(String(64), nullable=False, comment='统计分类名称')
@@ -111,7 +109,6 @@ class StatDatasetRelation(Base):
     __table_args__ = {'comment': '统计-数据集关联表'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
-    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
     relation_id = Column(BigInteger, nullable=False, comment='关联业务关联ID')
     stat_id = Column(BigInteger, nullable=False, index=True, comment='三级统计分类ID')
     project_id = Column(BigInteger, nullable=False, comment='所属项目ID')
@@ -124,7 +121,6 @@ class DatasetPermission(Base):
     __table_args__ = {'comment': '数据集权限表（细粒度权限控制）'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
-    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
     permission_id = Column(BigInteger, nullable=False, comment='权限业务关联ID')
     resource_type = Column(String(32), nullable=False, index=True, comment='资源类型：project-项目 dataset-数据集 subset-子集 view-视图')
     resource_id = Column(BigInteger, nullable=False, index=True, comment='资源ID')

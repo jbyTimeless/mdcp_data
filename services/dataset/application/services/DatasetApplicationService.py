@@ -45,7 +45,6 @@ class DatasetApplicationService:
 
         # 5. Create Dataset aggregate root
         dataset = Dataset(
-            biz_id=uuid.uuid4().hex,
             dataset_id=random.randint(100000, 999999),
             project_id=project.id,
             dataset_name=req.dataset_name,
@@ -68,7 +67,6 @@ class DatasetApplicationService:
         saved = await self.repo.save(dataset)
         return DatasetInfoResp(
             id=saved.id,
-            biz_id=saved.biz_id,
             dataset_id=saved.dataset_id,
             project_id=saved.project_id,
             dataset_name=saved.dataset_name,

@@ -1,4 +1,6 @@
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from common.dependencies.database import get_db
 from sqlalchemy import select, in_
 from fastapi import HTTPException, status
 from typing import List
@@ -11,11 +13,16 @@ from services.dataset.application.schemas.project import (
 )
 from services.dataset.infrastructure.repositories.project_repository_impl import ProjectRepositoryImpl
 
-class ProjectApplicationService:
+def get_project_repo(db: AsyncSession = Depends(get_db)) -> ProjectRepositoryImpl:
+    return ProjectRepositoryImpl(db)
 
-    @staticmethod
-    async def create_project(req: 'ProjectCreateReq', current_user_id: int, repo: ProjectRepository) -> 'ProjectInfoResp':
-        conflict = await repo.check_name_conflicts(req.project_name, req.project_en_name)
+class ProjectApplicationService:
+    def __init__(self, repo: ProjectRepository = Depends(get_project_repo), db: AsyncSession = Depends(get_db)):
+        self.repo = repo
+        self.db = db
+
+    async def create_project(self, req: ProjectCreateReq, current_user_id: int) -> ProjectInfoResp:
+        conflict = await self.repo.check_name_conflicts(req.project_name, req.project_en_name)
         if conflict == "name":
             from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="Project name already exists")
@@ -23,23 +30,15 @@ class ProjectApplicationService:
             from fastapi import HTTPException
             raise HTTPException(status_code=400, detail="Project English name already exists")
         
-        return await repo.create_project(req, current_user_id)  
+        saved_project = await self.repo.create_project(req, current_user_id)
+        return ProjectInfoResp.model_validate(saved_project)
 
-
-
-
-
-
-
-
-    @staticmethod
-    async def list_projects(user_id: int, page: int, size: int, repo: ProjectRepository) -> ProjectListResp:
-        items, total = await repo.list_projects(user_id, page, size)
+    async def list_projects(self, user_id: int, page: int, size: int) -> ProjectListResp:
+        items, total = await self.repo.list_projects(user_id, page, size)
         return ProjectListResp(total=total, items=items)
 
-    @staticmethod
-    async def update_project(project_id: str, req: ProjectUpdateReq, repo: ProjectRepository) -> ProjectInfoResp:
-        project = await repo.get_by_id(project_id)
+    async def update_project(self, project_id: str, req: ProjectUpdateReq) -> ProjectInfoResp:
+        project = await self.repo.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
             
@@ -47,7 +46,7 @@ class ProjectApplicationService:
         project.update_info(project_name=req.project_name)
         
         # We need to check if we can update storage
-        is_empty = await repo.is_project_empty(project.id)
+        is_empty = await self.repo.is_project_empty(project.id)
         try:
             project.update_storage(
                 is_empty=is_empty,
@@ -66,23 +65,21 @@ class ProjectApplicationService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
             
         # Save changes
-        saved_project = await repo.save(project)
+        saved_project = await self.repo.save(project)
         return ProjectInfoResp.model_validate(saved_project)
 
-    @staticmethod
-    async def delete_project(project_id: str, repo: ProjectRepository) -> None:
-        project = await repo.get_by_id(project_id)
+    async def delete_project(self, project_id: str) -> None:
+        project = await self.repo.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
             
         try:
-            await repo.delete(project)
+            await self.repo.delete(project)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    @staticmethod
-    async def get_project_permissions(project_id: str, repo: ProjectRepository, db: AsyncSession) -> ProjectPermissionListResp:
-        project = await repo.get_by_id(project_id)
+    async def get_project_permissions(self, project_id: str) -> ProjectPermissionListResp:
+        project = await self.repo.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
             
@@ -92,7 +89,7 @@ class ProjectApplicationService:
         # Fetch usernames
         user_ids = [p.user_id for p in project.permissions]
         stmt = select(SysUser.id, SysUser.username).where(SysUser.id.in_(user_ids))
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         user_map = {row.id: row.username for row in result.all()}
         
         items = []
@@ -105,9 +102,8 @@ class ProjectApplicationService:
             
         return ProjectPermissionListResp(items=items)
 
-    @staticmethod
-    async def update_project_permissions(project_id: str, req: ProjectPermissionUpdateReq, grant_user_id: int, repo: ProjectRepository) -> None:
-        project = await repo.get_by_id(project_id)
+    async def update_project_permissions(self, project_id: str, req: ProjectPermissionUpdateReq, grant_user_id: int) -> None:
+        project = await self.repo.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
             
@@ -120,4 +116,4 @@ class ProjectApplicationService:
         ]
         
         project.update_permissions(new_permissions)
-        await repo.save(project)
+        await self.repo.save(project)

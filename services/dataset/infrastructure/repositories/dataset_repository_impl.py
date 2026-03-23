@@ -45,6 +45,36 @@ class DatasetRepositoryImpl(DatasetRepository):
         user_perm = perm_result.scalar()
         return user_perm in required_perms
 
+    async def check_user_dataset_permission(
+        self, dataset_db_id: int, user_id: int, required_perms: List[str]
+    ) -> bool:
+        """Check if user has required permission on a dataset (or is the creator, or has project permission)"""
+        # First check if user is the dataset creator
+        ds_stmt = select(DatasetInfo.create_user_id, DatasetInfo.project_id).where(DatasetInfo.id == dataset_db_id)
+        ds_result = await self.session.execute(ds_stmt)
+        ds_row = ds_result.first()
+        if not ds_row:
+            return False
+        creator_id, project_id = ds_row
+        
+        if creator_id == user_id:
+            return True
+            
+        # Check dataset permission
+        perm_stmt = select(DatasetPermission.permission_type).where(
+            DatasetPermission.resource_type == 'dataset',
+            DatasetPermission.resource_id == dataset_db_id,
+            DatasetPermission.user_id == user_id,
+            DatasetPermission.status == 1
+        )
+        perm_result = await self.session.execute(perm_stmt)
+        user_perm = perm_result.scalar()
+        if user_perm in required_perms:
+            return True
+            
+        # Fallback to project permission
+        return await self.check_user_project_permission(project_id, user_id, required_perms)
+
     async def check_name_conflicts(
         self, project_db_id: int, dataset_name: str, dataset_en_name: str
     ) -> Optional[str]:

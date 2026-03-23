@@ -1,5 +1,6 @@
 import uuid
 import random
+from typing import Dict, Any
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from common.dependencies.database import get_db
@@ -83,5 +84,100 @@ class DatasetApplicationService:
             stat_level3_id=saved.stat_level3_id,
             tags=saved.tags,
             description=saved.description,
+            schema_config=saved.schema_config,
+            column_config=saved.column_config,
+            visual_config=saved.visual_config,
             create_user_id=saved.create_user_id,
         )
+
+    async def update_dataset_overview(self, dataset_id: int, description: str, current_user_id: int) -> DatasetInfoResp:
+        """Update dataset overview/description"""
+        # Get dataset
+        dataset = await self.repo.get_by_id(dataset_id)
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        
+        # Check permission
+        has_perm = await self.repo.check_user_dataset_permission(
+            dataset_id, current_user_id, ['manage', 'edit']
+        )
+        if not has_perm:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to edit this dataset"
+            )
+        
+        # Update description
+        dataset.update_info(description=description)
+        saved = await self.repo.save(dataset)
+        
+        return DatasetInfoResp.from_orm(saved)
+
+    async def update_dataset_schema(self, dataset_id: int, schema_config: Dict[str, Any], current_user_id: int) -> DatasetInfoResp:
+        """Update dataset schema configuration"""
+        # Get dataset
+        dataset = await self.repo.get_by_id(dataset_id)
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        
+        # Check permission
+        has_perm = await self.repo.check_user_dataset_permission(
+            dataset_id, current_user_id, ['manage', 'edit']
+        )
+        if not has_perm:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to edit this dataset"
+            )
+        
+        # Update schema config
+        dataset.update_info(schema_config=schema_config)
+        saved = await self.repo.save(dataset)
+        
+        return DatasetInfoResp.from_orm(saved)
+
+    async def update_dataset_column_config(self, dataset_id: int, column_config: Dict[str, Any], current_user_id: int) -> DatasetInfoResp:
+        """Update dataset column display configuration"""
+        # Get dataset
+        dataset = await self.repo.get_by_id(dataset_id)
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        
+        # Check permission
+        has_perm = await self.repo.check_user_dataset_permission(
+            dataset_id, current_user_id, ['manage', 'edit']
+        )
+        if not has_perm:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to edit this dataset"
+            )
+        
+        # Update column config
+        dataset.update_info(column_config=column_config)
+        saved = await self.repo.save(dataset)
+        
+        return DatasetInfoResp.from_orm(saved)
+
+    async def update_dataset_visual_config(self, dataset_id: int, visual_config: Dict[str, Any], current_user_id: int) -> DatasetInfoResp:
+        """Update dataset visualization configuration"""
+        # Get dataset
+        dataset = await self.repo.get_by_id(dataset_id)
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        
+        # Check permission
+        has_perm = await self.repo.check_user_dataset_permission(
+            dataset_id, current_user_id, ['manage', 'edit']
+        )
+        if not has_perm:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to edit this dataset"
+            )
+        
+        # Update visual config
+        dataset.update_info(visual_config=visual_config)
+        saved = await self.repo.save(dataset)
+        
+        return DatasetInfoResp.from_orm(saved)

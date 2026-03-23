@@ -48,6 +48,10 @@ class DatasetRepository(ABC):
         pass
 
     @abstractmethod
+    async def check_user_dataset_permission(self, dataset_db_id: int, user_id: int, required_perms: List[str]) -> bool:
+        pass
+
+    @abstractmethod
     async def get_project_by_business_id(self, project_id: str):
         """Get project ORM object by business project_id string"""
         pass

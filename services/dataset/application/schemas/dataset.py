@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class DatasetCreateReq(BaseModel):
@@ -17,6 +17,30 @@ class DatasetCreateReq(BaseModel):
     stat_level3_id: Optional[int] = Field(None, description="关联统计树三级分类ID")
     tags: Optional[str] = Field(None, max_length=256, description="数据集标签，逗号分隔")
     description: Optional[str] = Field(None, description="数据集简介/概览描述")
+
+
+class DatasetOverviewUpdateReq(BaseModel):
+    description: str = Field(..., description="数据集概览描述，包括数据来源、标注规则、使用方式等")
+
+
+class DatasetSchemaUpdateReq(BaseModel):
+    schema_config: Dict[str, Any] = Field(..., description="数据结构Schema配置，符合Elasticsearch 7 mapping格式")
+
+    @validator('schema_config')
+    def check_reserved_fields(cls, v):
+        reserved_fields = ['_doc_type', 'datasetsRelatedFiles']
+        for field in reserved_fields:
+            if field in v:
+                raise ValueError(f"Field '{field}' is a reserved field and cannot be used")
+        return v
+
+
+class DatasetColumnUpdateReq(BaseModel):
+    column_config: Dict[str, Any] = Field(..., description="数据列配置，定义数据列表展示的列信息")
+
+
+class DatasetVisualUpdateReq(BaseModel):
+    visual_config: Dict[str, Any] = Field(..., description="可视化信息配置，支持图片点线框、点云框、视频可视化等")
 
 
 class DatasetInfoResp(BaseModel):
@@ -37,6 +61,9 @@ class DatasetInfoResp(BaseModel):
     stat_level3_id: Optional[int] = None
     tags: Optional[str] = None
     description: Optional[str] = None
+    schema_config: Optional[Dict[str, Any]] = None
+    column_config: Optional[Dict[str, Any]] = None
+    visual_config: Optional[Dict[str, Any]] = None
     create_user_id: int
     create_time: Optional[datetime] = None
     update_time: Optional[datetime] = None

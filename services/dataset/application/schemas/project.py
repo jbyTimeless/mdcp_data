@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 class ProjectCreateReq(BaseModel):
     project_name: str = Field(..., max_length=32, description="项目名称（全局唯一）")
@@ -36,3 +36,43 @@ class ProjectInfoResp(BaseModel):
     
     class Config:
         from_attributes = True
+
+class ProjectListItemDTO(BaseModel):
+    id: int
+    project_id: str
+    project_name: str
+    project_en_name: str
+    my_permission: Optional[str] = None
+    creator_name: str
+
+class ProjectListResp(BaseModel):
+    total: int
+    items: List[ProjectListItemDTO]
+
+class ProjectUpdateReq(BaseModel):
+    project_name: str
+    is_compliance_open: int = 0
+    is_share_storage: int = 0
+    storage_type: str
+    storage_endpoint: str
+    bucket_name: str
+    storage_dir: str
+    write_ak: Optional[str] = None
+    write_sk: Optional[str] = None
+    read_ak: Optional[str] = None
+    read_sk: Optional[str] = None
+
+class ProjectPermissionItem(BaseModel):
+    user_id: int
+    username: str
+    permission_type: str
+
+class ProjectPermissionListResp(BaseModel):
+    items: List[ProjectPermissionItem]
+
+class ProjectPermissionUpdateItem(BaseModel):
+    user_id: int
+    permission_type: str
+
+class ProjectPermissionUpdateReq(BaseModel):
+    permissions: List[ProjectPermissionUpdateItem]

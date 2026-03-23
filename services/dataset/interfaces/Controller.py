@@ -4,10 +4,10 @@ from sqlalchemy import text
 from common.dependencies.database import get_db
 from common.dependencies.minio_client import minio_client
 from common.dependencies.es_client import es_client
-from services.dataset.interfaces.DatasetController import router as dataset_router
-
+from services.dataset.interfaces.ProjectController import router as project_router
+    
 router = APIRouter()
-router.include_router(dataset_router)
+router.include_router(project_router)
 @router.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db)):
     status = {"status": "ok", "db": "unknown", "minio": "unknown", "es": "unknown"}

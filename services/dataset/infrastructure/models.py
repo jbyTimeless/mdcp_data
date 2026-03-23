@@ -57,3 +57,39 @@ class DataProject(Base):
     create_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), comment='创建时间')
     update_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment='更新时间')
     is_deleted = Column(Integer, nullable=False, server_default=text("0"), comment='软删除：0-未删除 1-已删除')
+
+class DatasetInfo(Base):
+    __tablename__ = 'dataset_info'
+    __table_args__ = {'comment': '数据集主表'}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
+    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
+    dataset_id = Column(BigInteger, nullable=False, comment='数据集业务关联ID')
+    project_id = Column(BigInteger, nullable=False, index=True, comment='所属项目ID')
+    dataset_name = Column(String(64), nullable=False, comment='数据集名称')
+    dataset_en_name = Column(String(64), nullable=False, comment='数据集英文名称')
+    dataset_path = Column(String(256), nullable=False, comment='数据集存储路径')
+    dataset_type = Column(String(32), nullable=False, comment='数据集类型')
+    media_type = Column(String(32), nullable=False, comment='数据媒体形式')
+    is_data_update_open = Column(Integer, nullable=False, server_default=text("0"), comment='是否开启数据更新：1-开启 0-关闭')
+    create_user_id = Column(BigInteger, nullable=False, index=True, comment='创建人用户ID')
+    create_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), comment='创建时间')
+    update_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment='更新时间')
+    is_deleted = Column(Integer, nullable=False, server_default=text("0"), comment='软删除：0-未删除 1-已删除')
+
+
+class DatasetPermission(Base):
+    __tablename__ = 'dataset_permission'
+    __table_args__ = {'comment': '数据集权限表'}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True, comment='物理主键ID')
+    biz_id = Column(String(64), nullable=False, unique=True, comment='业务唯一主键ID')
+    permission_id = Column(BigInteger, nullable=False, comment='权限业务关联ID')
+    resource_type = Column(String(32), nullable=False, index=True, comment='资源类型：project-项目 dataset-数据集 subset-子集 view-视图')
+    resource_id = Column(BigInteger, nullable=False, index=True, comment='资源ID')
+    user_id = Column(BigInteger, nullable=False, index=True, comment='被授权用户ID')
+    permission_type = Column(String(32), nullable=False, comment='权限类型：view-查看 edit-编辑 manage-管理')
+    grant_user_id = Column(BigInteger, nullable=False, comment='授权人用户ID')
+    grant_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), comment='授权时间')
+    update_time = Column(DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment='更新时间')
+    status = Column(Integer, nullable=False, server_default=text("1"), comment='状态：1-生效 0-失效')

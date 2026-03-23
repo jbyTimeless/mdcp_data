@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from common.dependencies.database import get_db
-from sqlalchemy import select, in_
+from sqlalchemy import select
 from fastapi import HTTPException, status
 from typing import List
 from services.dataset.infrastructure.models import SysUser
@@ -9,7 +9,7 @@ from services.dataset.domain.entities.project import Project, ProjectPermission
 from services.dataset.domain.repositories.project_repository import ProjectRepository
 from services.dataset.application.schemas.project import (
     ProjectListResp, ProjectUpdateReq, ProjectPermissionItem, 
-    ProjectPermissionListResp, ProjectPermissionUpdateReq, ProjectInfoResp
+    ProjectPermissionListResp, ProjectPermissionUpdateReq, ProjectInfoResp, ProjectCreateReq
 )
 from services.dataset.infrastructure.repositories.project_repository_impl import ProjectRepositoryImpl
 

@@ -5,13 +5,13 @@ from sqlalchemy import select, func, delete
 from services.dataset.domain.entities.project import Project, ProjectPermission
 from services.dataset.domain.repositories.project_repository import ProjectRepository, ProjectListItemDTO
 from services.dataset.infrastructure.models import DataProject, DatasetPermission, DatasetInfo, SysUser
+from services.dataset.application.schemas.project import ProjectInfoResp
 
 class ProjectRepositoryImpl(ProjectRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def create_project(self, req: 'ProjectCreateReq', current_user_id: int) -> 'ProjectInfoResp':
-        import uuid
         project = Project(
             project_id=uuid.uuid4().hex,
             project_name=req.project_name,
@@ -30,7 +30,6 @@ class ProjectRepositoryImpl(ProjectRepository):
         )
         
         saved_project = await self.save(project)
-        from services.dataset.application.schemas.project import ProjectInfoResp
         return ProjectInfoResp.model_validate(saved_project)
 
     async def get_by_id(self, project_id: str) -> Optional[Project]:
@@ -139,6 +138,7 @@ class ProjectRepositoryImpl(ProjectRepository):
                 )
                 self.session.add(new_perm)
 
+        await self.session.commit()
         return project
 
     async def delete(self, project: Project) -> None:
@@ -174,16 +174,13 @@ class ProjectRepositoryImpl(ProjectRepository):
         count_result = await self.session.execute(count_stmt)
         total = count_result.scalar()
 
-        # Data query
-        # Join SysUser for creator_name
+        # Join SysUser for creator_name (Outer join just in case creator is missing in dummy DB)
         # Outer join DatasetPermission for user's permission
-        # Note: aliasing might be needed for cleaner SQL
-        
         stmt = select(
             DataProject,
             SysUser.username.label("creator_name"),
             DatasetPermission.permission_type.label("my_permission")
-        ).join(
+        ).outerjoin(
             SysUser, DataProject.create_user_id == SysUser.id
         ).outerjoin(
             DatasetPermission,
@@ -201,8 +198,8 @@ class ProjectRepositoryImpl(ProjectRepository):
         
         items = []
         for dp, creator_name, my_perm in rows:
-            # If the user is the creator, they might inherently have 'manage' permission
-            # but let's stick to what's in the DB. Or if creator, default to manage.
+            # Fallback for creator name if not in DB
+            eff_creator_name = creator_name if creator_name else f"User {dp.create_user_id}"
             eff_perm = 'manage' if dp.create_user_id == user_id else my_perm
             
             items.append(ProjectListItemDTO(
@@ -210,7 +207,7 @@ class ProjectRepositoryImpl(ProjectRepository):
                 project_id=dp.project_id,
                 project_name=dp.project_name,
                 project_en_name=dp.project_en_name,
-                creator_name=creator_name,
+                creator_name=eff_creator_name,
                 my_permission=eff_perm
             ))
             

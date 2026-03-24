@@ -34,9 +34,8 @@ async def create_dataset(
         return error(msg=f"Failed to create dataset: {str(e)}")
 
 
-@router.post("/{dataset_id}/overview", response_model=ResponseStructure[DatasetInfoResp])
+@router.post("/overview", response_model=ResponseStructure[DatasetInfoResp])
 async def update_dataset_overview(
-    dataset_id: int = Path(..., description="数据集ID"),
     req: DatasetOverviewUpdateReq = ...,
     current_user: SysUser = Depends(get_current_user),
     service: DatasetApplicationService = Depends()
@@ -48,7 +47,7 @@ async def update_dataset_overview(
     """
     try:
         dataset_info = await service.update_dataset_overview(
-            dataset_id=dataset_id,
+            dataset_id=req.dataset_id,
             description=req.description,
             current_user_id=current_user.id
         )
@@ -59,9 +58,8 @@ async def update_dataset_overview(
         return error(msg=f"Failed to update dataset overview: {str(e)}")
 
 
-@router.post("/{dataset_id}/schema", response_model=ResponseStructure[DatasetInfoResp])
+@router.post("/schema", response_model=ResponseStructure[DatasetInfoResp])
 async def update_dataset_schema(
-    dataset_id: int = Path(..., description="数据集ID"),
     req: DatasetSchemaUpdateReq = ...,
     current_user: SysUser = Depends(get_current_user),
     service: DatasetApplicationService = Depends()
@@ -75,7 +73,7 @@ async def update_dataset_schema(
     """
     try:
         dataset_info = await service.update_dataset_schema(
-            dataset_id=dataset_id,
+            dataset_id=req.dataset_id,
             schema_config=req.schema_config,
             current_user_id=current_user.id
         )
@@ -86,9 +84,8 @@ async def update_dataset_schema(
         return error(msg=f"Failed to update dataset schema: {str(e)}")
 
 
-@router.post("/{dataset_id}/column-config", response_model=ResponseStructure[DatasetInfoResp])
+@router.post("/column-config", response_model=ResponseStructure[DatasetInfoResp])
 async def update_dataset_column_config(
-    dataset_id: int = Path(..., description="数据集ID"),
     req: DatasetColumnUpdateReq = ...,
     current_user: SysUser = Depends(get_current_user),
     service: DatasetApplicationService = Depends()
@@ -101,7 +98,7 @@ async def update_dataset_column_config(
     """
     try:
         dataset_info = await service.update_dataset_column_config(
-            dataset_id=dataset_id,
+            dataset_id=req.dataset_id,
             column_config=req.column_config,
             current_user_id=current_user.id
         )
@@ -112,9 +109,8 @@ async def update_dataset_column_config(
         return error(msg=f"Failed to update dataset column config: {str(e)}")
 
 
-@router.post("/{dataset_id}/visual-config", response_model=ResponseStructure[DatasetInfoResp])
+@router.post("/visual-config", response_model=ResponseStructure[DatasetInfoResp])
 async def update_dataset_visual_config(
-    dataset_id: int = Path(..., description="数据集ID"),
     req: DatasetVisualUpdateReq = ...,
     current_user: SysUser = Depends(get_current_user),
     service: DatasetApplicationService = Depends()
@@ -126,7 +122,7 @@ async def update_dataset_visual_config(
     """
     try:
         dataset_info = await service.update_dataset_visual_config(
-            dataset_id=dataset_id,
+            dataset_id=req.dataset_id,
             visual_config=req.visual_config,
             current_user_id=current_user.id
         )

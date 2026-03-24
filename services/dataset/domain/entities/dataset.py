@@ -7,8 +7,8 @@ class Dataset(BaseModel):
     Dataset Aggregate Root
     """
     id: Optional[int] = None
-    dataset_id: int
-    project_id: int  # FK to data_project.id
+    dataset_id: str
+    project_id: str  # FK to data_project.project_id (business ID)
     dataset_name: str
     dataset_en_name: str
     dataset_path: str
@@ -16,16 +16,16 @@ class Dataset(BaseModel):
     media_type: str
     application_scenario: Optional[str] = None
     is_data_update_open: int = 0
-    related_dataset_id: Optional[int] = None
-    stat_level1_id: Optional[int] = None
-    stat_level2_id: Optional[int] = None
-    stat_level3_id: Optional[int] = None
+    related_dataset_id: Optional[str] = None
+    stat_level1_id: Optional[str] = None
+    stat_level2_id: Optional[str] = None
+    stat_level3_id: Optional[str] = None
     tags: Optional[str] = None
     description: Optional[str] = None
     schema_config: Optional[Dict[str, Any]] = None
     column_config: Optional[Dict[str, Any]] = None
     visual_config: Optional[Dict[str, Any]] = None
-    create_user_id: int
+    create_user_id: str
     is_deleted: int = 0
 
     def update_info(self, **kwargs):
@@ -40,9 +40,9 @@ class Dataset(BaseModel):
 
     def update_stat_association(
         self,
-        stat_level1_id: Optional[int] = None,
-        stat_level2_id: Optional[int] = None,
-        stat_level3_id: Optional[int] = None,
+        stat_level1_id: Optional[str] = None,
+        stat_level2_id: Optional[str] = None,
+        stat_level3_id: Optional[str] = None,
     ):
         """Update statistics tree association"""
         self.stat_level1_id = stat_level1_id

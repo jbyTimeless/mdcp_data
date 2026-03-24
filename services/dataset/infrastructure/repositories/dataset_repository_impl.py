@@ -24,7 +24,7 @@ class DatasetRepositoryImpl(DatasetRepository):
         return result.scalars().first()
 
     async def check_user_project_permission(
-        self, project_db_id: int, user_id: int, required_perms: List[str]
+        self, project_db_id: int, user_id: str, required_perms: List[str]
     ) -> bool:
         """Check if user has required permission on a project (or is the creator)"""
         # Check if user is the project creator (always has manage permission)
@@ -46,7 +46,7 @@ class DatasetRepositoryImpl(DatasetRepository):
         return user_perm in required_perms
 
     async def check_user_dataset_permission(
-        self, dataset_db_id: int, user_id: int, required_perms: List[str]
+        self, dataset_db_id: str, user_id: str, required_perms: List[str]
     ) -> bool:
         """Check if user has required permission on a dataset (or is the creator, or has project permission)"""
         # First check if user is the dataset creator
@@ -127,10 +127,10 @@ class DatasetRepositoryImpl(DatasetRepository):
             # Handle stat_dataset_relation if stat_level3_id is provided
             if dataset.stat_level3_id:
                 relation = StatDatasetRelation(
-                    relation_id=random.randint(100000, 999999),
+                    relation_id=uuid.uuid4().hex,
                     stat_id=dataset.stat_level3_id,
                     project_id=dataset.project_id,
-                    dataset_id=new_ds.id,
+                    dataset_id=dataset.dataset_id,
                 )
                 self.session.add(relation)
         else:
@@ -159,7 +159,7 @@ class DatasetRepositoryImpl(DatasetRepository):
         await self.session.commit()
         return dataset
 
-    async def get_by_id(self, dataset_db_id: int) -> Optional[Dataset]:
+    async def get_by_id(self, dataset_db_id: str) -> Optional[Dataset]:
         stmt = select(DatasetInfo).where(
             DatasetInfo.dataset_id == dataset_db_id,
             DatasetInfo.is_deleted == 0
@@ -173,8 +173,8 @@ class DatasetRepositoryImpl(DatasetRepository):
 
     async def list_datasets(
         self,
-        project_db_id: int,
-        user_id: int,
+        project_id: str,
+        user_id: str,
         page: int,
         size: int,
         dataset_name_like: Optional[str] = None,
@@ -183,10 +183,15 @@ class DatasetRepositoryImpl(DatasetRepository):
         order_by: str = "id",
         order_direction: str = "asc"
     ) -> Tuple[List[DatasetListItemDTO], int]:
+        # Get project internal ID by business project_id
+        project = await self.get_project_by_business_id(project_id)
+        if not project:
+            return [], 0
+        project_internal_id = project.id
 
         def apply_filters(query):
             query = query.where(
-                DatasetInfo.project_id == project_db_id,
+                DatasetInfo.project_id == project_id,
                 DatasetInfo.is_deleted == 0
             )
             if dataset_name_like:

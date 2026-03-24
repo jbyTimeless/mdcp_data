@@ -2,9 +2,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 class ProjectPermission(BaseModel):
-    user_id: int
+    user_id: str
     permission_type: str  # 'view', 'edit', 'manage'
-    grant_user_id: int
+    grant_user_id: str
 
 class Project(BaseModel):
     """
@@ -24,7 +24,7 @@ class Project(BaseModel):
     write_sk: Optional[str] = None
     read_ak: Optional[str] = None
     read_sk: Optional[str] = None
-    create_user_id: int
+    create_user_id: str
     is_deleted: int = 0
     permissions: List[ProjectPermission] = []
     

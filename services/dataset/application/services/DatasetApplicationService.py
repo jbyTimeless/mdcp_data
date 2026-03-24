@@ -15,7 +15,7 @@ class DatasetApplicationService:
         self.repo: DatasetRepository = DatasetRepositoryImpl(db)
         self.db = db
 
-    async def create_dataset(self, req: DatasetCreateReq, current_user_id: int) -> DatasetInfoResp:
+    async def create_dataset(self, req: DatasetCreateReq, current_user_id: str) -> DatasetInfoResp:
         # 1. Resolve project by business ID
         project = await self.repo.get_project_by_business_id(req.project_id)
         if not project:
@@ -23,7 +23,7 @@ class DatasetApplicationService:
 
         # 2. Permission check: user must have 'manage' or 'edit' on the project
         has_perm = await self.repo.check_user_project_permission(
-            project.id, current_user_id, ['manage', 'edit']
+            project.project_id, current_user_id, ['manage', 'edit']
         )
         if not has_perm:
             raise HTTPException(
@@ -33,7 +33,7 @@ class DatasetApplicationService:
 
         # 3. Check name conflicts within the project
         conflict = await self.repo.check_name_conflicts(
-            project.id, req.dataset_name, req.dataset_en_name
+            project.project_id, req.dataset_name, req.dataset_en_name
         )
         if conflict == "name":
             raise HTTPException(status_code=400, detail="Dataset name already exists in this project")
@@ -88,7 +88,7 @@ class DatasetApplicationService:
             create_user_id=saved.create_user_id,
         )
 
-    async def update_dataset_overview(self, dataset_id: str, description: str, current_user_id: int) -> DatasetInfoResp:
+    async def update_dataset_overview(self, dataset_id: str, description: str, current_user_id: str) -> DatasetInfoResp:
         """Update dataset overview/description"""
         # Get dataset
         dataset = await self.repo.get_by_id(dataset_id)
@@ -111,7 +111,7 @@ class DatasetApplicationService:
         
         return DatasetInfoResp.from_orm(saved)
 
-    async def update_dataset_schema(self, dataset_id: str, schema_config: Dict[str, Any], current_user_id: int) -> DatasetInfoResp:
+    async def update_dataset_schema(self, dataset_id: str, schema_config: Dict[str, Any], current_user_id: str) -> DatasetInfoResp:
         """Update dataset schema configuration"""
         # Get dataset
         dataset = await self.repo.get_by_id(dataset_id)
@@ -134,7 +134,7 @@ class DatasetApplicationService:
         
         return DatasetInfoResp.from_orm(saved)
 
-    async def update_dataset_column_config(self, dataset_id: str, column_config: Dict[str, Any], current_user_id: int) -> DatasetInfoResp:
+    async def update_dataset_column_config(self, dataset_id: str, column_config: Dict[str, Any], current_user_id: str) -> DatasetInfoResp:
         """Update dataset column display configuration"""
         # Get dataset
         dataset = await self.repo.get_by_id(dataset_id)
@@ -157,7 +157,7 @@ class DatasetApplicationService:
         
         return DatasetInfoResp.from_orm(saved)
 
-    async def update_dataset_visual_config(self, dataset_id: str, visual_config: Dict[str, Any], current_user_id: int) -> DatasetInfoResp:
+    async def update_dataset_visual_config(self, dataset_id: str, visual_config: Dict[str, Any], current_user_id: str) -> DatasetInfoResp:
         """Update dataset visualization configuration"""
         # Get dataset
         dataset = await self.repo.get_by_id(dataset_id)

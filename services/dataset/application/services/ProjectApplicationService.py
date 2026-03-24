@@ -22,7 +22,7 @@ class ProjectApplicationService:
         self.repo = repo
         self.db = db
 
-    async def create_project(self, req: ProjectCreateReq, current_user_id: int) -> ProjectInfoResp:
+    async def create_project(self, req: ProjectCreateReq, current_user_id: str) -> ProjectInfoResp:
         conflict = await self.repo.check_name_conflicts(req.project_name, req.project_en_name)
         if conflict == "name":
             from fastapi import HTTPException
@@ -34,7 +34,7 @@ class ProjectApplicationService:
         saved_project = await self.repo.create_project(req, current_user_id)
         return ProjectInfoResp.model_validate(saved_project)
 
-    async def list_projects(self, req: ProjectListReq, user_id: int) -> ProjectListResp:
+    async def list_projects(self, req: ProjectListReq, user_id: str) -> ProjectListResp:
         items, total = await self.repo.list_projects(
             user_id, 
             req.page, 
@@ -128,7 +128,7 @@ class ProjectApplicationService:
             
         return ProjectPermissionListResp(items=items)
 
-    async def update_project_permissions(self, project_id: str, req: ProjectPermissionUpdateReq, grant_user_id: int) -> None:
+    async def update_project_permissions(self, project_id: str, req: ProjectPermissionUpdateReq, grant_user_id: str) -> None:
         project = await self.repo.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")

@@ -8,7 +8,7 @@ from sqlalchemy import select
 # In a real application, this would decode a JWT token or session cookie.
 async def get_current_user(
     # e.g., token: str = Depends(oauth2_scheme),
-    user_id: int = 666, # Mocking a user ID for demonstration
+    user_id: str = "666", # Mocking a user ID for demonstration
     db: AsyncSession = Depends(get_db)
 ) -> SysUser:
     # Simulating fetching the user by ID

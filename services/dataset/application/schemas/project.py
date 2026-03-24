@@ -34,7 +34,7 @@ class ProjectInfoResp(BaseModel):
     storage_endpoint: str
     bucket_name: str
     storage_dir: str
-    create_user_id: int
+    create_user_id: str
     
     class Config:
         from_attributes = True
@@ -69,7 +69,7 @@ class ProjectUpdateReq(BaseModel):
     read_sk: Optional[str] = None
 
 class ProjectPermissionItem(BaseModel):
-    user_id: int
+    user_id: str
     username: str
     permission_type: str
 
@@ -77,7 +77,7 @@ class ProjectPermissionListResp(BaseModel):
     items: List[ProjectPermissionItem]
 
 class ProjectPermissionUpdateItem(BaseModel):
-    user_id: int
+    user_id: str
     permission_type: str
 
 class ProjectPermissionUpdateReq(BaseModel):

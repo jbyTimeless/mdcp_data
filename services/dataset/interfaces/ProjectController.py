@@ -23,7 +23,7 @@ async def create_data_project(
     新建项目接口
     """
     try:
-        project_info = await service.create_project(req=req, current_user_id=current_user.id)
+        project_info = await service.create_project(req=req, current_user_id=str(current_user.id))
         return success(data=project_info, msg="Project created successfully")
     except Exception as e:
         if hasattr(e, "status_code") and getattr(e, "status_code") < 500:
@@ -38,7 +38,7 @@ async def list_projects(
 ):
     """获取项目列表（分页、过滤、排序 - 支持POST Body）"""
     try:
-        resp_data = await service.list_projects(req, current_user.id)
+        resp_data = await service.list_projects(req, str(current_user.id))
         return success(data=resp_data, msg="Success")
     except Exception as e:
         return error(msg=f"Failed to list projects: {str(e)}")
@@ -98,7 +98,7 @@ async def update_project_permissions(
 ):
     """更新项目权限（全量替换）"""
     try:
-        await service.update_project_permissions(project_id, req, current_user.id)
+        await service.update_project_permissions(project_id, req, str(current_user.id))
         return success(msg="Project permissions updated successfully")
     except HTTPException as e:
         return error(msg=e.detail, code=e.status_code)

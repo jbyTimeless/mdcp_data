@@ -24,20 +24,24 @@ class DatasetRepositoryImpl(DatasetRepository):
         return result.scalars().first()
 
     async def check_user_project_permission(
-        self, project_db_id: int, user_id: str, required_perms: List[str]
+        self, project_biz_id: str, user_id: str, required_perms: List[str]
     ) -> bool:
         """Check if user has required permission on a project (or is the creator)"""
-        # Check if user is the project creator (always has manage permission)
-        proj_stmt = select(DataProject.create_user_id).where(DataProject.id == project_db_id)
+        # Get project business ID and creator
+        proj_stmt = select(DataProject.create_user_id, DataProject.project_id).where(DataProject.project_id == project_biz_id)
         proj_result = await self.session.execute(proj_stmt)
-        creator_id = proj_result.scalar()
+        proj_row = proj_result.first()
+        if not proj_row:
+            return False
+        creator_id, project_biz_id = proj_row
+        
         if creator_id == user_id:
             return True
 
-        # Check dataset_permission table
+        # Check dataset_permission table using business project_id
         perm_stmt = select(DatasetPermission.permission_type).where(
             DatasetPermission.resource_type == 'project',
-            DatasetPermission.resource_id == project_db_id,
+            DatasetPermission.resource_id == project_biz_id,
             DatasetPermission.user_id == user_id,
             DatasetPermission.status == 1
         )

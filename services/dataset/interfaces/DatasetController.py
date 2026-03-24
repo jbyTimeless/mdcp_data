@@ -26,7 +26,7 @@ async def create_dataset(
     - 支持关联统计树层级
     """
     try:
-        dataset_info = await service.create_dataset(req=req, current_user_id=current_user.id)
+        dataset_info = await service.create_dataset(req=req, current_user_id=str(current_user.id))
         return success(data=dataset_info, msg="Dataset created successfully")
     except HTTPException as e:
         return error(msg=e.detail, code=e.status_code)
@@ -49,7 +49,7 @@ async def update_dataset_overview(
         dataset_info = await service.update_dataset_overview(
             dataset_id=req.dataset_id,
             description=req.description,
-            current_user_id=current_user.id
+            current_user_id=str(current_user.id)
         )
         return success(data=dataset_info, msg="Dataset overview updated successfully")
     except HTTPException as e:
@@ -75,7 +75,7 @@ async def update_dataset_schema(
         dataset_info = await service.update_dataset_schema(
             dataset_id=req.dataset_id,
             schema_config=req.schema_config,
-            current_user_id=current_user.id
+            current_user_id=str(current_user.id)
         )
         return success(data=dataset_info, msg="Dataset schema updated successfully")
     except HTTPException as e:
@@ -100,7 +100,7 @@ async def update_dataset_column_config(
         dataset_info = await service.update_dataset_column_config(
             dataset_id=req.dataset_id,
             column_config=req.column_config,
-            current_user_id=current_user.id
+            current_user_id=str(current_user.id)
         )
         return success(data=dataset_info, msg="Dataset column config updated successfully")
     except HTTPException as e:
@@ -124,7 +124,7 @@ async def update_dataset_visual_config(
         dataset_info = await service.update_dataset_visual_config(
             dataset_id=req.dataset_id,
             visual_config=req.visual_config,
-            current_user_id=current_user.id
+            current_user_id=str(current_user.id)
         )
         return success(data=dataset_info, msg="Dataset visual config updated successfully")
     except HTTPException as e:

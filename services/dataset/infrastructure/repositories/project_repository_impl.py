@@ -12,7 +12,7 @@ class ProjectRepositoryImpl(ProjectRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_project(self, req: 'ProjectCreateReq', current_user_id: int) -> 'ProjectInfoResp':
+    async def create_project(self, req: 'ProjectCreateReq', current_user_id: str) -> 'ProjectInfoResp':
         project = Project(
             project_id=uuid.uuid4().hex,
             project_name=req.project_name,
@@ -43,7 +43,7 @@ class ProjectRepositoryImpl(ProjectRepository):
         # Get permissions
         perm_stmt = select(DatasetPermission).where(
             DatasetPermission.resource_type == 'project',
-            DatasetPermission.resource_id == data_project.id,
+            DatasetPermission.resource_id == data_project.project_id,
             DatasetPermission.status == 1
         )
         perm_result = await self.session.execute(perm_stmt)
@@ -122,19 +122,18 @@ class ProjectRepositoryImpl(ProjectRepository):
         if project.id:
             del_stmt = delete(DatasetPermission).where(
                 DatasetPermission.resource_type == 'project',
-                DatasetPermission.resource_id == project.id
+                DatasetPermission.resource_id == project.project_id
             )
             await self.session.execute(del_stmt)
             
             for p in project.permissions:
                 new_perm = DatasetPermission(
-                    biz_id=uuid.uuid4().hex,
-                    permission_id=0, # or some snowflake ID logic
+                    permission_id=uuid.uuid4().hex,
                     resource_type='project',
-                    resource_id=project.id,
-                    user_id=p.user_id,
+                    resource_id=project.project_id,
+                    user_id=str(p.user_id),
                     permission_type=p.permission_type,
-                    grant_user_id=p.grant_user_id,
+                    grant_user_id=str(p.grant_user_id),
                     status=1
                 )
                 self.session.add(new_perm)
@@ -171,7 +170,7 @@ class ProjectRepositoryImpl(ProjectRepository):
 
     async def list_projects(
         self, 
-        user_id: int, 
+        user_id: str, 
         page: int, 
         size: int,
         project_name_like: Optional[str] = None,
@@ -223,7 +222,7 @@ class ProjectRepositoryImpl(ProjectRepository):
         ).outerjoin(
             DatasetPermission,
             (DatasetPermission.resource_type == 'project') &
-            (DatasetPermission.resource_id == DataProject.id) &
+            (DatasetPermission.resource_id == DataProject.project_id) &
             (DatasetPermission.user_id == user_id) &
             (DatasetPermission.status == 1)
         )

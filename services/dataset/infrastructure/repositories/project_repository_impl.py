@@ -12,7 +12,7 @@ class ProjectRepositoryImpl(ProjectRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_project(self, req: 'ProjectCreateReq', current_user_id: str) -> 'ProjectInfoResp':
+    async def create_project(self, req: 'ProjectCreateReq', current_user_id: str) -> 'Project':
         project = Project(
             project_id=uuid.uuid4().hex,
             project_name=req.project_name,
@@ -31,7 +31,7 @@ class ProjectRepositoryImpl(ProjectRepository):
         )
         
         saved_project = await self.save(project)
-        return ProjectInfoResp.model_validate(saved_project)
+        return saved_project
 
     async def get_by_id(self, project_id: str) -> Optional[Project]:
         stmt = select(DataProject).where(DataProject.project_id == project_id, DataProject.is_deleted == 0)

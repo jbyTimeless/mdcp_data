@@ -32,6 +32,17 @@ class ProjectApplicationService:
             raise HTTPException(status_code=400, detail="Project English name already exists")
         
         saved_project = await self.repo.create_project(req, current_user_id)
+        
+        # Automatically add creator as manage permission
+        from services.dataset.domain.entities.project import ProjectPermission
+        creator_perm = ProjectPermission(
+            user_id=current_user_id,
+            permission_type='manage',
+            grant_user_id=current_user_id
+        )
+        saved_project.permissions.append(creator_perm)
+        await self.repo.save(saved_project)
+        
         return ProjectInfoResp.model_validate(saved_project)
 
     async def list_projects(self, req: ProjectListReq, user_id: str) -> ProjectListResp:

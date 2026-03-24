@@ -98,7 +98,7 @@ async def update_project_permissions(
 ):
     """更新项目权限（全量替换）"""
     try:
-        await service.update_project_permissions(project_id, req, str(current_user.id))
+        await service.update_project_permissions(project_id, req, current_user.user_id)
         return success(msg="Project permissions updated successfully")
     except HTTPException as e:
         return error(msg=e.detail, code=e.status_code)

@@ -12,7 +12,7 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db)
 ) -> SysUser:
     # Simulating fetching the user by ID
-    stmt = select(SysUser).where(SysUser.id == user_id, SysUser.is_deleted == 0)
+    stmt = select(SysUser).where(SysUser.user_id == user_id, SysUser.is_deleted == 0)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     

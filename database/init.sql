@@ -22,7 +22,8 @@ CREATE TABLE `data_project` (
   UNIQUE KEY `uk_project_id` (`project_id`),
   UNIQUE KEY `uk_project_name` (`project_name`),
   UNIQUE KEY `uk_project_en_name` (`project_en_name`),
-  KEY `idx_create_user` (`create_user_id`)
+  KEY `idx_create_user` (`create_user_id`),
+  KEY `idx_project_id_covering` (`project_id`,`project_name`,`project_en_name`,`is_compliance_open`,`is_share_storage`,`create_user_id`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据项目表（数据集顶层管理单元）';
 
 -- mdcp_data.data_stat_config definition
@@ -40,7 +41,8 @@ CREATE TABLE `data_stat_config` (
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_parent_stat_name` (`parent_stat_id`,`stat_name`),
-  KEY `idx_level` (`level`)
+  KEY `idx_level` (`level`),
+  KEY `idx_stat_id_covering` (`stat_id`,`parent_stat_id`,`stat_name`,`level`,`summary_type`,`create_user_id`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据统计配置表（统计树管理）';
 
 -- mdcp_data.data_subset definition
@@ -62,7 +64,8 @@ CREATE TABLE `data_subset` (
   UNIQUE KEY `uk_dataset_subset_name` (`dataset_id`,`parent_subset_id`,`subset_name`),
   KEY `idx_dataset_id` (`dataset_id`),
   KEY `idx_parent_subset` (`parent_subset_id`),
-  KEY `idx_level` (`level`)
+  KEY `idx_level` (`level`),
+  KEY `idx_subset_id_covering` (`subset_id`,`dataset_id`,`parent_subset_id`,`subset_name`,`subset_en_name`,`level`,`create_user_id`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据子集表（数据集物理树形分层）';
 
 -- mdcp_data.dataset_info definition
@@ -94,7 +97,8 @@ CREATE TABLE `dataset_info` (
   UNIQUE KEY `uk_project_dataset_name` (`project_id`,`dataset_name`),
   UNIQUE KEY `uk_project_dataset_en_name` (`project_id`,`dataset_en_name`),
   KEY `idx_project_id` (`project_id`),
-  KEY `idx_create_user` (`create_user_id`)
+  KEY `idx_create_user` (`create_user_id`),
+  KEY `idx_dataset_id_covering` (`dataset_id`,`project_id`,`dataset_name`,`dataset_en_name`,`dataset_type`,`media_type`,`create_user_id`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据集主表（数据集核心元数据表）';
 
 -- mdcp_data.dataset_permission definition
@@ -112,7 +116,8 @@ CREATE TABLE `dataset_permission` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_resource_user` (`resource_type`,`resource_id`,`user_id`),
   KEY `idx_user_id` (`user_id`),
-  KEY `idx_resource` (`resource_type`,`resource_id`)
+  KEY `idx_resource` (`resource_type`,`resource_id`),
+  KEY `idx_permission_id_covering` (`permission_id`,`resource_type`,`resource_id`,`user_id`,`permission_type`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据集权限表（细粒度权限控制）';
 
 -- mdcp_data.dataset_view definition
@@ -130,7 +135,8 @@ CREATE TABLE `dataset_view` (
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_dataset_view_name` (`dataset_id`,`view_name`),
-  KEY `idx_dataset_id` (`dataset_id`)
+  KEY `idx_dataset_id` (`dataset_id`),
+  KEY `idx_view_id_covering` (`view_id`,`dataset_id`,`view_name`,`view_en_name`,`create_user_id`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据集视图表（数据集逻辑筛选视图）';
 
 -- mdcp_data.label_delivery_task definition
@@ -155,7 +161,8 @@ CREATE TABLE `label_delivery_task` (
   KEY `idx_label_type` (`label_type_id`),
   KEY `idx_source_dataset` (`source_dataset_id`),
   KEY `idx_task_status` (`task_status`),
-  KEY `idx_batch_no` (`label_platform_batch_no`)
+  KEY `idx_batch_no` (`label_platform_batch_no`),
+  KEY `idx_task_id_covering` (`task_id`,`task_name`,`label_category`,`source_dataset_id`,`delivery_dataset_id`,`task_status`,`create_user_id`,`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据送标任务表';
 
 -- mdcp_data.label_type definition
@@ -174,7 +181,8 @@ CREATE TABLE `label_type` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_type_name` (`type_name`),
   UNIQUE KEY `uk_channel_code` (`related_channel_code`),
-  KEY `idx_label_category` (`label_category`)
+  KEY `idx_label_category` (`label_category`),
+  KEY `idx_type_id_covering` (`type_id`,`label_category`,`type_name`,`type_en_name`,`status`,`create_user_id`,`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标注类型配置表';
 
 -- mdcp_data.stat_dataset_relation definition
@@ -188,7 +196,8 @@ CREATE TABLE `stat_dataset_relation` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_stat_dataset` (`stat_id`,`dataset_id`),
   KEY `idx_stat_id` (`stat_id`),
-  KEY `idx_dataset_id` (`dataset_id`)
+  KEY `idx_dataset_id` (`dataset_id`),
+  KEY `idx_relation_id_covering` (`relation_id`,`stat_id`,`project_id`,`dataset_id`,`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统计-数据集关联表';
 
 -- mdcp_data.sys_role definition
@@ -204,7 +213,8 @@ CREATE TABLE `sys_role` (
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '软删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_role_id` (`role_id`),
-  UNIQUE KEY `uk_role_code` (`role_code`)
+  UNIQUE KEY `uk_role_code` (`role_code`),
+  KEY `idx_role_id_covering` (`role_id`,`role_name`,`role_code`,`status`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统角色表';
 
 -- mdcp_data.sys_user definition
@@ -225,7 +235,8 @@ CREATE TABLE `sys_user` (
   UNIQUE KEY `uk_user_id` (`user_id`),
   UNIQUE KEY `uk_account` (`account`),
   UNIQUE KEY `uk_ak` (`access_key`),
-  KEY `idx_role_code` (`role_code`)
+  KEY `idx_role_code` (`role_code`),
+  KEY `idx_user_id_covering` (`user_id`,`account`,`username`,`role_code`,`email`,`status`,`create_time`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统用户表';
 
 -- mdcp_data.view_subset_relation definition
@@ -238,5 +249,6 @@ CREATE TABLE `view_subset_relation` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_view_subset` (`view_id`,`subset_id`),
   KEY `idx_view_id` (`view_id`),
-  KEY `idx_subset_id` (`subset_id`)
+  KEY `idx_subset_id` (`subset_id`),
+  KEY `idx_relation_id_covering` (`relation_id`,`view_id`,`subset_id`,`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='视图-子集关联表（多对多）';

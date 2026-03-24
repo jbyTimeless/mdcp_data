@@ -4,7 +4,7 @@ from common.dependencies.database import Base
 
 class SysUser(Base):
     __tablename__ = 'sys_user'
-    __table_args__ = {'comment': '系统用户表'}
+    __table_args__ = {'extend_existing': True, 'comment': '系统用户表'}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment='【物理主键】数据库自增ID，仅内部使用')
     user_id = Column(String(64), nullable=False, unique=True, comment='【业务主键】用户唯一ID（自定义雪花ID）')

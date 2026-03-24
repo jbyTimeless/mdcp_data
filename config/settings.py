@@ -22,6 +22,26 @@ class Settings(BaseSettings):
     # Elasticsearch
     es_host: str
 
+    # LDAP
+    ldap_url: str = "ldap://10.234.46.20:389"
+    ldap_base: str = "OU=Magna Group,DC=magna,DC=global"
+    ldap_user_prefix: str = "magna\\"
+    ldap_password: str = ""
+
+    # Redis
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: str = ""
+    
+    # JWT
+    jwt_expire_hours: int = 24
+    jwt_redis_prefix: str = "mdcp:user:login"
+
+    # Snowflake ID
+    snowflake_worker_id: int = 1
+    snowflake_datacenter_id: int = 1
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(BASE_DIR, ".env"), 
         env_file_encoding="utf-8", 

@@ -22,24 +22,76 @@ class LDAPService:
             # 提取邮箱前缀作为账号
             account = email.split('@')[0]
             
-            # 构造LDAP用户名
-            ldap_user = f"{self.user_prefix}{account}"
+            # 尝试多种绑定方式
+            bind_success = False
+            conn = None
             
-            # 建立连接
-            conn = Connection(
-                self.server,
-                user=ldap_user,
-                password=password,
-                auto_bind=False,
-                read_only=True
-            )
+            # 方式1: 尝试用UPN格式 (account@domain)
+            ldap_user_upn = f"{account}@magna.global"
+            print(f"尝试LDAP绑定方式1 (UPN): {ldap_user_upn}")
+            try:
+                conn = Connection(
+                    self.server,
+                    user=ldap_user_upn,
+                    password=password,
+                    auto_bind=False,
+                    read_only=True,
+                    raise_exceptions=True
+                )
+                bind_success = conn.bind()
+                if bind_success:
+                    print(f"UPN格式绑定成功")
+            except Exception as e:
+                print(f"UPN绑定失败: {str(e)}")
+                bind_success = False
             
-            if not conn.bind():
-                conn.unbind()
+            # 方式2: 尝试用域\账号格式
+            if not bind_success:
+                ldap_user_domain = f"{self.user_prefix}{account}"
+                print(f"尝试LDAP绑定方式2 (域账号): {ldap_user_domain}")
+                try:
+                    conn = Connection(
+                        self.server,
+                        user=ldap_user_domain,
+                        password=password,
+                        auto_bind=False,
+                        read_only=True,
+                        raise_exceptions=True
+                    )
+                    bind_success = conn.bind()
+                    if bind_success:
+                        print(f"域账号格式绑定成功")
+                except Exception as e:
+                    print(f"域账号绑定失败: {str(e)}")
+                    bind_success = False
+            
+            # 方式3: 尝试直接用邮箱绑定
+            if not bind_success:
+                print(f"尝试LDAP绑定方式3 (邮箱): {email}")
+                try:
+                    conn = Connection(
+                        self.server,
+                        user=email,
+                        password=password,
+                        auto_bind=False,
+                        read_only=True,
+                        raise_exceptions=True
+                    )
+                    bind_success = conn.bind()
+                    if bind_success:
+                        print(f"邮箱格式绑定成功")
+                except Exception as e:
+                    print(f"邮箱绑定失败: {str(e)}")
+                    bind_success = False
+            
+            if not bind_success or not conn:
+                print("所有绑定方式均失败")
                 return None
             
-            # 查询用户信息
+            # 查询用户信息 - 尝试两种搜索方式
+            # 方式1: 按userPrincipalName搜索
             search_filter = f"(userPrincipalName={email})"
+            print(f"执行LDAP搜索: filter={search_filter}, base={self.base_dn}")
             conn.search(
                 search_base=self.base_dn,
                 search_filter=search_filter,
@@ -48,21 +100,38 @@ class LDAPService:
             )
             
             if not conn.entries:
-                conn.unbind()
-                return None
+                # 方式2: 按sAMAccountName搜索
+                print(f"userPrincipalName搜索无结果，尝试按sAMAccountName搜索: {account}")
+                search_filter = f"(sAMAccountName={account})"
+                conn.search(
+                    search_base=self.base_dn,
+                    search_filter=search_filter,
+                    search_scope=ldap3.SUBTREE,
+                    attributes=['cn', 'sAMAccountName', 'mail', 'displayName']
+                )
+                
+                if not conn.entries:
+                    print(f"两种搜索方式均无结果，搜索返回: {conn.result}")
+                    conn.unbind()
+                    return None
             
             user_entry = conn.entries[0]
+            print(f"找到用户: {user_entry.entry_dn}")
+            
             user_info = {
                 'account': str(user_entry.sAMAccountName),
                 'email': str(user_entry.mail) if hasattr(user_entry, 'mail') else email,
                 'username': str(user_entry.displayName) if hasattr(user_entry, 'displayName') else str(user_entry.cn)
             }
             
+            print(f"用户信息: {user_info}")
             conn.unbind()
             return user_info
             
         except Exception as e:
-            print(f"LDAP认证错误: {str(e)}")
+            print(f"LDAP认证总错误: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
 
 # 全局LDAP服务实例

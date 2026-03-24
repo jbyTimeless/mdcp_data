@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     ldap_password: str = ""
 
     # Redis
-    redis_host: str = "localhost"
+    redis_host: str = "10.234.46.73"
     redis_port: int = 6379
     redis_db: int = 0
     redis_password: str = ""

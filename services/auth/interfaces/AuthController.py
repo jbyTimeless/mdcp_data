@@ -7,7 +7,7 @@ from services.auth.application.services.LoginApplicationService import LoginAppl
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
-@router.post("/login", summary="用户登录", response_model=LoginResponse)
+@router.post("/login", summary="用户登录")
 async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     """
     用户登录接口

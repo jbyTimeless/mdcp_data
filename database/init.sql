@@ -249,13 +249,13 @@ CREATE TABLE `sys_role` (
 -- mdcp_data.sys_user definition
 CREATE TABLE `sys_user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '【物理主键】数据库自增ID，仅内部使用',
-  `user_id` varchar(64) NOT NULL COMMENT '【业务主键】用户唯一ID（自定义雪花ID）',
+  `user_id` varchar(64) NOT NULL COMMENT '【核心业务主键】用户全局唯一ID（雪花ID），全系统表关联外键',
   `account` varchar(64) NOT NULL COMMENT '用户登录账号',
   `username` varchar(32) NOT NULL COMMENT '用户姓名',
-  `access_key` varchar(128) NOT NULL COMMENT 'AK用户身份凭证',
-  `secret_key` varchar(256) NOT NULL COMMENT 'SK密钥凭证',
+  `access_key` varchar(128) NOT NULL COMMENT '【对外鉴权凭证】API/JWT身份标识（可重置）',
+  `secret_key` varchar(256) NOT NULL COMMENT '【JWT签名密钥】令牌加密/验签密钥（可重置）',
   `role_code` varchar(32) NOT NULL COMMENT '角色编码',
-  `email` varchar(64) DEFAULT NULL COMMENT '用户邮箱（审批/通知用）',
+  `email` varchar(64) DEFAULT NULL COMMENT '用户邮箱（idep登录）',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '状态：1-启用 0-禁用',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

@@ -10,7 +10,7 @@ from common.dependencies.redis_client import redis_client
 from common.exceptions import BusinessException
 from common.schemas.response import error
 from services.auth.interfaces.AuthController import router as auth_router
-from services.dataset.interfaces.Controller import router as dataset_router
+from services.dataset.interfaces.Controller import router as health_router
 from services.dataset.interfaces.ProjectController import router as project_router
 from services.dataset.interfaces.DatasetController import router as dataset_detail_router
 
@@ -37,7 +37,7 @@ app = FastAPI(
 
 # 注册路由
 app.include_router(auth_router, prefix="/api/v1", tags=["认证"])
-app.include_router(dataset_router, prefix="/api/v1/datasets", tags=["数据集"])
+app.include_router(health_router, prefix="/api/v1", tags=["健康检查"])
 app.include_router(project_router, prefix="/api/v1/projects", tags=["项目"])
 app.include_router(dataset_detail_router, prefix="/api/v1/dataset", tags=["数据集详情"])
 

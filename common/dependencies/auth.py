@@ -1,32 +1,80 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from common.dependencies.database import get_db
-from services.dataset.infrastructure.models import SysUser
 from sqlalchemy import select
+import jwt
+from common.dependencies.database import get_db
+from common.utils.jwt_util import jwt_util
+from common.dependencies.redis_client import redis_client
+from services.dataset.infrastructure.models import SysUser
 
-# This is a dummy/simplified dependency to extract the current user from context.
-# In a real application, this would decode a JWT token or session cookie.
+# OAuth2方案，从Authorization头中提取Bearer令牌
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
+
 async def get_current_user(
-    # e.g., token: str = Depends(oauth2_scheme),
-    user_id: str = "666", # Mocking a user ID for demonstration
+    token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ) -> SysUser:
-    # Simulating fetching the user by ID
+    """
+    验证JWT令牌并获取当前用户
+    1. 从请求头提取Bearer令牌
+    2. 解析令牌获取用户ID
+    3. 查询用户信息获取专属密钥
+    4. 使用用户专属密钥验证令牌签名
+    5. 检查令牌是否存在于Redis（未被注销）
+    6. 返回用户对象
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="无法验证凭据",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        # 第一步：无验证解析令牌获取用户ID
+        payload = jwt.decode(token, options={"verify_signature": False})
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    
+    # 第二步：查询用户信息
     stmt = select(SysUser).where(SysUser.user_id == user_id, SysUser.is_deleted == 0)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     
-    # If the user does not exist in the mock scenario, we create a mock user object
-    if not user:
-        # NOTE: Ideally this raises an HTTPException(status_code=401, detail="Unauthorized")
-        # Creating a mock user to satisfy the context requirement for this exercise
-        user = SysUser(
-            id=1,
-            user_id=10001,
-            account="admin",
-            username="Admin User",
-            access_key="mock_ak",
-            secret_key="mock_sk",
-            role_code="admin"
+    if user is None:
+        raise credentials_exception
+    
+    # 第三步：使用用户专属密钥验证令牌签名
+    try:
+        payload = jwt_util.verify_token(token, user.secret_key)
+        if payload is None:
+            raise credentials_exception
+        # 验证令牌中的用户ID与查询到的用户一致
+        if payload.get("sub") != user_id:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    
+    # 第四步：检查令牌是否存在于Redis（未被注销）
+    redis_token = await redis_client.get(f"mdcp:user:login:{user_id}")
+    if redis_token is None or redis_token != token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="令牌已失效或已注销",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # 第五步：检查用户状态
+    if user.status != 1:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="用户已被禁用"
+        )
+    
+    # 第六步：刷新令牌有效期（续期30分钟）
+    await redis_client.expire(f"mdcp:user:login:{user_id}", 1800)
+    
     return user

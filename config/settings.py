@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     redis_password: str = ""
     
     # JWT
-    jwt_expire_hours: int = 24
+    jwt_expire_hours: int = 1
     jwt_redis_prefix: str = "mdcp:user:login"
 
     # Snowflake ID

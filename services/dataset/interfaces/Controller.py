@@ -6,7 +6,8 @@ from common.dependencies.minio_client import minio_client
 from common.dependencies.es_client import es_client
 from services.dataset.interfaces.ProjectController import router as project_router
 from services.dataset.interfaces.DatasetController import router as dataset_router
-    
+from common.dependencies.auth import get_current_user
+from services.dataset.infrastructure.models import SysUser
 router = APIRouter()
 router.include_router(project_router)
 router.include_router(dataset_router)
@@ -38,5 +39,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
 
     return status
 @router.get("/hello")
-def hello():
+def hello(
+    current_user: SysUser = Depends(get_current_user)
+    ):
     return {"message": "Hello World"}

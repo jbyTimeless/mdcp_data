@@ -41,6 +41,10 @@ class RedisClient:
     async def exists(self, key: str) -> bool:
         """检查key是否存在"""
         return await self.redis.exists(key) > 0
+    
+    async def expire(self, key: str, seconds: int) -> bool:
+        """设置key的过期时间"""
+        return await self.redis.expire(key, seconds)
 
 # 全局Redis客户端实例
 redis_client = RedisClient()

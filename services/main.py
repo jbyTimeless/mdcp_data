@@ -22,7 +22,15 @@ async def lifespan(app: FastAPI):
     # 断开Redis连接
     await redis_client.disconnect()
 
-app = FastAPI(title="MDCP Data Platform", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="MDCP Data Platform", 
+    version="1.0.0", 
+    lifespan=lifespan,
+    # 配置国内swagger资源CDN，解决加载超时问题
+    swagger_js_url="https://cdn.staticfile.org/swagger-ui/5.11.0/swagger-ui-bundle.js",
+    swagger_css_url="https://cdn.staticfile.org/swagger-ui/5.11.0/swagger-ui.css",
+    swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png"
+)
 
 # 注册路由
 app.include_router(auth_router, prefix="/api/v1", tags=["认证"])

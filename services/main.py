@@ -2,10 +2,13 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from common.dependencies.database import engine, Base
 from common.dependencies.redis_client import redis_client
+from common.exceptions import BusinessException
+from common.schemas.response import error
 from services.auth.interfaces.AuthController import router as auth_router
 from services.dataset.interfaces.Controller import router as dataset_router
 from services.dataset.interfaces.ProjectController import router as project_router
@@ -37,6 +40,14 @@ app.include_router(auth_router, prefix="/api/v1", tags=["认证"])
 app.include_router(dataset_router, prefix="/api/v1/datasets", tags=["数据集"])
 app.include_router(project_router, prefix="/api/v1/projects", tags=["项目"])
 app.include_router(dataset_detail_router, prefix="/api/v1/dataset", tags=["数据集详情"])
+
+@app.exception_handler(BusinessException)
+async def business_exception_handler(request: Request, exc: BusinessException):
+    """全局业务异常处理器"""
+    return JSONResponse(
+        status_code=200,
+        content=error(msg=exc.message, code=exc.code).model_dump()
+    )
 
 @app.get("/")
 def read_root():
